@@ -1,0 +1,17 @@
+{
+  "benchmark": "Partovi-Morris / MacLatchy uniform-tube case",
+  "magnetic_moment_A_m2": 0.67,
+  "magnet_radius_m": 0.0063,
+  "magnet_length_m": 0.0064,
+  "tube_inner_radius_m": 0.00729,
+  "tube_outer_radius_m": 0.00796,
+  "copper_conductivity_S_m": 5.08e7,
+  "relative_permeability": 1.0,
+  "tube_half_length_m": 0.08,
+  "farfield_radius_m": 0.045,
+  "farfield_half_length_m": 0.12,
+  "acceptance_max_abs_relative_error_percent": 1.0,
+  "mesh_scale_default": 1.0,
+  "solver_frame": "magnet fixed; conducting tube translated axially using Lorentz Velocity",
+  "force_extraction": "F_drag = integral_Cu(Joule Heating dV) / abs(v)"
+}

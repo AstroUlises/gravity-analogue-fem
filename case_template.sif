@@ -1,0 +1,159 @@
+! FEM-01/A blind Elmer benchmark.
+! The reference Partovi-Morris force values are intentionally absent.
+Check Keywords "Warn"
+
+$ v = __VELOCITY__
+$ sigmaCu = 5.08e7
+$ md = 0.67
+$ am = 0.0063
+$ Lm = 0.0064
+$ Mmag = md/(pi*am*am*Lm)
+
+Header
+  Mesh DB "." "mesh"
+End
+
+Simulation
+  Max Output Level = 5
+  Coordinate System = "Axi Symmetric"
+  Simulation Type = Steady State
+  Steady State Max Iterations = 1
+  Output Intervals(1) = 1
+  Use Mesh Names = Logical True
+End
+
+Constants
+  Permeability Of Vacuum = 1.2566370614359173e-6
+End
+
+Body 1
+  Name = "Air"
+  Equation = 1
+  Material = 1
+End
+
+Body 2
+  Name = "Copper"
+  Equation = 1
+  Material = 2
+  Body Force = 1
+End
+
+Body 3
+  Name = "Magnet"
+  Equation = 1
+  Material = 3
+End
+
+Material 1
+  Name = "Air"
+  Relative Permeability = 1.0
+  Relative Permittivity = 1.0
+  Electric Conductivity = 0.0
+  CopperMask = Logical False
+End
+
+Material 2
+  Name = "Copper"
+  Relative Permeability = 1.0
+  Relative Permittivity = 1.0
+  Electric Conductivity = Real $sigmaCu
+  CopperMask = Logical True
+End
+
+Material 3
+  Name = "UniformlyMagnetizedCylinder"
+  Relative Permeability = 1.0
+  Relative Permittivity = 1.0
+  Electric Conductivity = 0.0
+  Magnetization 1 = Real 0.0
+  Magnetization 2 = Real $Mmag
+  CopperMask = Logical False
+End
+
+Body Force 1
+  Name = "MovingCopperFrame"
+  ! Coordinate 1 = radial r; Coordinate 2 = axial z in Axi Symmetric mode.
+  ! The sign changes current direction but not Joule power / drag magnitude.
+  Lorentz Velocity 1 = Real 0.0
+  Lorentz Velocity 2 = Real $v
+  Lorentz Velocity 3 = Real 0.0
+End
+
+Equation 1
+  Name = "MagnetoQuasiStatic"
+  Active Solvers(4) = 1 2 3 4
+End
+
+Solver 1
+  Equation = "MGDynamics2D"
+  Variable = "A"
+  Procedure = "MagnetoDynamics2D" "MagnetoDynamics2D"
+  Handle Assembly = Logical False
+
+  Linear System Solver = Iterative
+  Linear System Iterative Method = GCR
+  Linear System Preconditioning = ILU2
+  Linear System Max Iterations = 5000
+  Linear System Residual Output = 20
+  Linear System Convergence Tolerance = 1.0e-10
+  Linear System Abort Not Converged = Logical True
+  Steady State Convergence Tolerance = 1.0e-10
+End
+
+Solver 2
+  Equation = "MGDynamicsCalc"
+  Procedure = "MagnetoDynamics" "MagnetoDynamicsCalcFields"
+  Potential Variable = String "A"
+
+  Calculate Current Density = Logical True
+  Calculate Electric Field = Logical True
+  Calculate Magnetic Flux Density = Logical True
+  Calculate Magnetic Field Strength = Logical True
+  Calculate Joule Heating = Logical True
+  Calculate Nodal Fields = Logical True
+  Calculate Elemental Fields = Logical True
+  Discontinuous Bodies = Logical True
+
+  Linear System Solver = Iterative
+  Linear System Iterative Method = CG
+  Linear System Preconditioning = None
+  Linear System Max Iterations = 5000
+  Linear System Residual Output = 0
+  Linear System Convergence Tolerance = 1.0e-10
+End
+
+Solver 3
+  Exec Solver = After All
+  Equation = "SavePower"
+  Procedure = "SaveData" "SaveScalars"
+  Filename = "power.dat"
+  File Append = Logical False
+  Echo Values = Logical True
+  Variable 1 = String "Joule Heating"
+  Operator 1 = String "material int"
+  Mask Name 1 = String "CopperMask"
+  Show Norm Index = Integer 1
+End
+
+Solver 4
+  Exec Solver = After All
+  Equation = "ResultOutput"
+  Procedure = "ResultOutputSolve" "ResultOutputSolver"
+  Output File Name = "field"
+  Vtu Format = Logical True
+  Save Geometry IDs = Logical True
+  Discontinuous Bodies = Logical True
+End
+
+Boundary Condition 10
+  Name = "FarBoundary"
+  Target Boundaries(1) = 10
+  A = Real 0.0
+End
+
+Boundary Condition 11
+  Name = "Axis"
+  Target Boundaries(1) = 11
+  A = Real 0.0
+End
